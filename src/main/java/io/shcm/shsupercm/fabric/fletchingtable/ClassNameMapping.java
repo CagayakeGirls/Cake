@@ -5,6 +5,7 @@ import net.fabricmc.mappingio.MappedElementKind;
 import net.fabricmc.mappingio.MappingReader;
 import net.fabricmc.mappingio.MappingVisitor;
 import org.gradle.api.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -77,7 +78,7 @@ public class ClassNameMapping implements MappingVisitor {
     }
 
     @Override
-    public boolean visitMethodVar(int lvtRowIndex, int lvIndex, int startOpIdx, String srcName) throws IOException {
+    public boolean visitMethodVar(int lvtRowIndex, int lvIndex, int startOpIdx, int endOpIdx, @Nullable String srcName) throws IOException {
         return false;
     }
 

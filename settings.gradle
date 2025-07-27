@@ -4,10 +4,11 @@ pluginManagement {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
+        maven { url "https://maven.architectury.dev/" }
         gradlePluginPortal()
     }
 }
 
 rootProject.name = 'FletchingTable'
 
-include ':testmod'
+//include ':testmod'

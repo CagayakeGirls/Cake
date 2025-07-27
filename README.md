@@ -1,5 +1,5 @@
 # Fletching Table
-Additions and automations for [fabric-loom](https://github.com/FabricMC/fabric-loom)
+Additions and automations for [architectury-loom](https://github.com/architectury/architectury-loom)
 
 ## This project is still experimental, use at your own risk.
 
@@ -11,12 +11,20 @@ Simply annotate a static class, method or field with `@Entrypoint` and specify t
 Fletching Table will automatically process it and add it to existing entrypoints in `fabric.mod.json`.
 
 ### Mixins
+
+> [!WARNING]
+> This feature is experimental on NeoForge and NOT support on MinecraftForge!
+
 Automatically registers mixins into the project's mixin jsons.
 
 Mixin environments can be overridden by annotating the mixin with `@MixinEnvironment`.
 You can set mixins to be registered automatically without MixinEnvironment by changing the `defaultMixinEnvironment` in the settings.
 
 ### Interface Injections
+
+> [!WARNING]
+> This feature is experimental on NeoForge and MinecraftForge!
+
 Registers interface injections automatically on mixins/interfaces annotated with `@InterfaceInjection`.
 
 By default either the interface or the mixin implementing it have to be annotated with `@InterfaceInjection`.
@@ -82,7 +90,7 @@ fletchingTable {
 Add the plugin by applying it <ins>**after loom**</ins>.
 ```patch
 plugins {
-    id 'fabric-loom' ...
+    id 'dev.architectury.loom' ...
 +   id "io.shcm.shsupercm.fabric.fletchingtable" version "1.6"
 }
 ```

@@ -10,6 +10,7 @@ repositories {
         name = 'Fabric'
         url = 'https://maven.fabricmc.net/'
     }
+    maven { url "https://maven.architectury.dev/" }
     mavenCentral()
     gradlePluginPortal()
 }
@@ -29,11 +30,16 @@ gradlePlugin {
 javadoc.options.addStringOption('Xdoclint:none', '-quiet')
 
 dependencies {
-    compileOnly group: 'commons-io', name: 'commons-io', version: '2.11.0'
-    compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.8.9'
-    compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
-    compileOnly group: 'net.fabricmc', name: 'fabric-loom', version: '1.1-SNAPSHOT'
-    compileOnly group: 'net.fabricmc', name: 'mapping-io', version: '0.2.1'
+    compileOnly group: 'commons-io', name: 'commons-io', version: '2.15.1'
+    compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    compileOnly group: 'net.fabricmc', name: 'sponge-mixin', version: '0.15.3+mixin.0.8.7'
+    compileOnly group: 'dev.architectury', name: 'architectury-loom', version: '1.10-SNAPSHOT'
+    compileOnly group: 'net.fabricmc', name: 'mapping-io', version: '0.7.1'
+
+    // Forge mods.toml parsing
+    compileOnly group: 'com.electronwill.night-config', name: 'toml', version: '3.6.6'
+
+    compileOnly("org.jetbrains:annotations:25.0.0")
 }
 
 task apiJar(type: Jar) {

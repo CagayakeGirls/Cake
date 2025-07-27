@@ -3,9 +3,16 @@
  */
 package io.shcm.shsupercm.fabric.fletchingtable;
 
+import com.electronwill.nightconfig.core.UnmodifiableCommentedConfig;
+import com.electronwill.nightconfig.core.io.ConfigWriter;
+import com.electronwill.nightconfig.toml.TomlFormat;
+import com.electronwill.nightconfig.toml.TomlParser;
 import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import io.shcm.shsupercm.fabric.fletchingtable.api.MixinEnvironment;
+import net.fabricmc.loom.LoomGradleExtension;
+import net.fabricmc.loom.api.LoomGradleExtensionAPI;
+import net.fabricmc.loom.util.ModPlatform;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -20,6 +27,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 public class FTGradlePlugin implements Plugin<Project> {
     private FletchingTableExtension fletchingTableExtension;
@@ -35,6 +45,9 @@ public class FTGradlePlugin implements Plugin<Project> {
 
     private void afterEvaluate(Project project) {
         FileCollection thisJar = project.files(getClass().getProtectionDomain().getCodeSource().getLocation());
+        LoomGradleExtension loomExtension = LoomGradleExtension.get(project);
+
+        loomExtension.getPlatform();
 
         if (fletchingTableExtension.getEnableAnnotationProcessor().get()) {
             try (InputStream is = getClass().getClassLoader().getResourceAsStream("META-INF/jars/api.jar")) {
@@ -60,7 +73,7 @@ public class FTGradlePlugin implements Plugin<Project> {
                 }
 
 
-            if (fletchingTableExtension.getEnableEntrypoints().get())
+            if (fletchingTableExtension.getEnableEntrypoints().get() && loomExtension.getPlatform().get() == ModPlatform.FABRIC)
                 for (Task classes : project.getTasksByName("classes", false))
                     classes.doLast("ftEntrypoints", this::entrypoints);
 
@@ -142,10 +155,18 @@ public class FTGradlePlugin implements Plugin<Project> {
     }
 
     private void mixins(Task task) {
+        LoomGradleExtension loomExtension = LoomGradleExtension.get(task.getProject());
         for (SourceSet sourceSet : task.getProject().getExtensions().getByType(JavaPluginExtension.class).getSourceSets())
             for (File resourcesDir : sourceSet.getResources().getSrcDirs()) {
                 File jsonFile = new File(resourcesDir, "fabric.mod.json");
+                //File forgeTomlFile = new File(resourcesDir, "META-INF/mods.toml");
+                File forgeManifestFile = new File(resourcesDir, "META-INF/MANIFEST.MF");
+                File neoForgeTomlFile = new File(resourcesDir, "META-INF/neoforge.mods.toml");
                 if (!jsonFile.exists())
+                    continue;
+//                if (!forgeTomlFile.exists())
+//                    continue;
+                if (!neoForgeTomlFile.exists())
                     continue;
 
                 for (File generatedSourcesDir : sourceSet.getOutput().getGeneratedSourcesDirs()) {
@@ -164,76 +185,135 @@ public class FTGradlePlugin implements Plugin<Project> {
                                     }
                                 });
 
-                        JsonObject json;
-                        try (FileReader fileReader = new FileReader(jsonFile)) {
-                            json = JsonParser.parseReader(fileReader).getAsJsonObject();
-                        }
-
-                        MixinEnvironment.Env modEnvironment = MixinEnvironment.Env.MIXINS;
-                        JsonElement jEnvironment = json.get("environment");
-                        if (jEnvironment != null)
-                            switch (jEnvironment.getAsString()) {
-                                case "client":
-                                    modEnvironment = MixinEnvironment.Env.CLIENT; break;
-                                case "server":
-                                    modEnvironment = MixinEnvironment.Env.SERVER; break;
-                            }
-
-                        JsonArray jMixinConfigs = json.getAsJsonArray("mixins");
-                        if (jMixinConfigs == null || jMixinConfigs.isEmpty())
-                            continue; //todo generate new mixin config
-
-                        for (JsonElement jMixinConfig : jMixinConfigs) {
-                            String configName;
-                            MixinEnvironment.Env environment = modEnvironment;
-                            if (jMixinConfig.isJsonObject()) {
-                                configName = jMixinConfig.getAsJsonObject().get("config").getAsString();
-
-                                if (environment == MixinEnvironment.Env.MIXINS) {
-                                    jEnvironment = jMixinConfig.getAsJsonObject().get("environment");
-                                    if (jEnvironment != null)
-                                        switch (jEnvironment.getAsString()) {
-                                            case "client":
-                                                environment = MixinEnvironment.Env.CLIENT;
-                                                break;
-                                            case "server":
-                                                environment = MixinEnvironment.Env.SERVER;
-                                                break;
-                                        }
-                                }
-                            } else
-                                configName = jMixinConfig.getAsString();
-
-                            try (FileReader fileReader = new FileReader(jsonFile = new File(sourceSet.getOutput().getResourcesDir(), configName))) {
+                        if (loomExtension.getPlatform().get() == ModPlatform.FABRIC) {
+                            JsonObject json;
+                            try (FileReader fileReader = new FileReader(jsonFile)) {
                                 json = JsonParser.parseReader(fileReader).getAsJsonObject();
                             }
 
-                            JsonElement jMixinRoot = json.get("package");
-                            if (jMixinRoot != null) {
-                                JsonArray jMixins = new JsonArray(), jClient = new JsonArray(), jServer = new JsonArray();
+                            MixinEnvironment.Env modEnvironment = MixinEnvironment.Env.MIXINS;
+                            JsonElement jEnvironment = json.get("environment");
+                            if (jEnvironment != null)
+                                switch (jEnvironment.getAsString()) {
+                                    case "client":
+                                        modEnvironment = MixinEnvironment.Env.CLIENT; break;
+                                    case "server":
+                                        modEnvironment = MixinEnvironment.Env.SERVER; break;
+                                }
 
-                                String mixinRoot = jMixinRoot.getAsString();
+                            JsonArray jMixinConfigs = json.getAsJsonArray("mixins");
+                            if (jMixinConfigs == null || jMixinConfigs.isEmpty())
+                                continue; //todo generate new mixin config
 
-                                for (Map.Entry<String, MixinEnvironment.Env> entry : mixins.entrySet())
-                                    if (entry.getKey().startsWith(mixinRoot)) {
-                                        String relMixin = entry.getKey().substring(mixinRoot.length() + 1);
-                                        switch (environment == MixinEnvironment.Env.MIXINS ? entry.getValue() : environment) {
-                                            case MIXINS: jMixins.add(relMixin); break;
-                                            case CLIENT: jClient.add(relMixin); break;
-                                            case SERVER: jServer.add(relMixin); break;
-                                        }
+                            for (JsonElement jMixinConfig : jMixinConfigs) {
+                                String configName;
+                                MixinEnvironment.Env environment = modEnvironment;
+                                if (jMixinConfig.isJsonObject()) {
+                                    configName = jMixinConfig.getAsJsonObject().get("config").getAsString();
+
+                                    if (environment == MixinEnvironment.Env.MIXINS) {
+                                        jEnvironment = jMixinConfig.getAsJsonObject().get("environment");
+                                        if (jEnvironment != null)
+                                            switch (jEnvironment.getAsString()) {
+                                                case "client":
+                                                    environment = MixinEnvironment.Env.CLIENT;
+                                                    break;
+                                                case "server":
+                                                    environment = MixinEnvironment.Env.SERVER;
+                                                    break;
+                                            }
                                     }
+                                } else
+                                    configName = jMixinConfig.getAsString();
 
-                                json.add("mixins", jMixins.isEmpty() ? null : jMixins);
-                                json.add("client", jClient.isEmpty() ? null : jClient);
-                                json.add("server", jServer.isEmpty() ? null : jServer);
+                                try (FileReader fileReader = new FileReader(jsonFile = new File(sourceSet.getOutput().getResourcesDir(), configName))) {
+                                    json = JsonParser.parseReader(fileReader).getAsJsonObject();
+                                }
 
-                                Gson gson = new Gson();
-                                try (FileWriter fileWriter = new FileWriter(jsonFile); JsonWriter writer = gson.newJsonWriter(fileWriter)) {
-                                    writer.setIndent("    ");
-                                    gson.toJson(json, writer);
+                                JsonElement jMixinRoot = json.get("package");
+                                if (jMixinRoot != null) {
+                                    JsonArray jMixins = new JsonArray(), jClient = new JsonArray(), jServer = new JsonArray();
+
+                                    String mixinRoot = jMixinRoot.getAsString();
+
+                                    for (Map.Entry<String, MixinEnvironment.Env> entry : mixins.entrySet())
+                                        if (entry.getKey().startsWith(mixinRoot)) {
+                                            String relMixin = entry.getKey().substring(mixinRoot.length() + 1);
+                                            switch (environment == MixinEnvironment.Env.MIXINS ? entry.getValue() : environment) {
+                                                case MIXINS: jMixins.add(relMixin); break;
+                                                case CLIENT: jClient.add(relMixin); break;
+                                                case SERVER: jServer.add(relMixin); break;
+                                            }
+                                        }
+
+                                    json.add("mixins", jMixins.isEmpty() ? null : jMixins);
+                                    json.add("client", jClient.isEmpty() ? null : jClient);
+                                    json.add("server", jServer.isEmpty() ? null : jServer);
+
+                                    Gson gson = new Gson();
+                                    try (FileWriter fileWriter = new FileWriter(jsonFile); JsonWriter writer = gson.newJsonWriter(fileWriter)) {
+                                        writer.setIndent("    ");
+                                        gson.toJson(json, writer);
+                                    }
                                 }
                             }
+                        } else if (loomExtension.isNeoForge()) {
+                            task.getProject().getLogger().warn("Auto write mixin config is experimental on NeoForge!");
+
+                            JsonObject json;
+                            UnmodifiableCommentedConfig toml;
+                            try (FileReader fileReader = new FileReader(neoForgeTomlFile)) {
+                                toml = TomlFormat.instance().createParser().parse(fileReader);
+                            }
+
+                            MixinEnvironment.Env modEnvironment = MixinEnvironment.Env.MIXINS;
+
+                            List<UnmodifiableCommentedConfig> tMixinConfigs = toml.get("mixins");
+                            if (tMixinConfigs == null || tMixinConfigs.isEmpty())
+                                continue; //todo generate new mixin config
+
+                            for (UnmodifiableCommentedConfig tMixinConfig : tMixinConfigs) {
+                                String configName;
+                                MixinEnvironment.Env environment = modEnvironment;
+
+                                configName = tMixinConfig.get("config");
+
+                                try (FileReader fileReader = new FileReader(neoForgeTomlFile = new File(sourceSet.getOutput().getResourcesDir(), configName))) {
+                                    toml = TomlFormat.instance().createParser().parse(fileReader);
+                                    json = JsonParser.parseReader(fileReader).getAsJsonObject();
+                                }
+
+                                JsonElement jMixinRoot = json.get("package");
+                                if (jMixinRoot != null) {
+                                    JsonArray jMixins = new JsonArray(), jClient = new JsonArray(), jServer = new JsonArray();
+
+                                    String mixinRoot = jMixinRoot.getAsString();
+
+                                    for (Map.Entry<String, MixinEnvironment.Env> entry : mixins.entrySet())
+                                        if (entry.getKey().startsWith(mixinRoot)) {
+                                            String relMixin = entry.getKey().substring(mixinRoot.length() + 1);
+                                            switch (environment == MixinEnvironment.Env.MIXINS ? entry.getValue() : environment) {
+                                                case MIXINS: jMixins.add(relMixin); break;
+                                                case CLIENT: jClient.add(relMixin); break;
+                                                case SERVER: jServer.add(relMixin); break;
+                                            }
+                                        }
+
+                                    json.add("mixins", jMixins.isEmpty() ? null : jMixins);
+                                    json.add("client", jClient.isEmpty() ? null : jClient);
+                                    json.add("server", jServer.isEmpty() ? null : jServer);
+
+                                    Gson gson = new Gson();
+                                    ConfigWriter configWriter = TomlFormat.instance().createWriter();
+                                    try (FileWriter fileWriter = new FileWriter(neoForgeTomlFile); JsonWriter writer = gson.newJsonWriter(fileWriter)) {
+                                        writer.setIndent("    ");
+                                        configWriter.writeToString(toml);
+                                        gson.toJson(json, writer);
+                                    }
+                                }
+                            }
+                        } else if (loomExtension.isForge()) {
+                            task.getProject().getLogger().error("Not support this feature on Minecraft Forge!");
                         }
 
                     } catch (Exception e) {
@@ -244,6 +324,7 @@ public class FTGradlePlugin implements Plugin<Project> {
     }
 
     private void interfaceInjections(Task task) {
+        LoomGradleExtension loomExtension = LoomGradleExtension.get(task.getProject());
         final ClassNameMapping mapping;
         try {
             mapping = new ClassNameMapping(task.getProject());
@@ -254,6 +335,9 @@ public class FTGradlePlugin implements Plugin<Project> {
         for (SourceSet sourceSet : task.getProject().getExtensions().getByType(JavaPluginExtension.class).getSourceSets())
             for (File resourcesDir : sourceSet.getResources().getSrcDirs()) {
                 File jsonFile = new File(sourceSet.getOutput().getResourcesDir(), "fabric.mod.json");
+                File commonJsonFile = new File(sourceSet.getOutput().getResourcesDir(), "architectury.common.json");
+//                if (!commonJsonFile.exists())
+//                    continue;
                 if (!jsonFile.exists())
                     continue;
 
@@ -265,46 +349,90 @@ public class FTGradlePlugin implements Plugin<Project> {
                     final Map<String, Set<String>> interfaceInjections = new HashMap<>();
 
                     try {
-                        JsonObject modJson;
-                        try (FileReader fileReader = new FileReader(jsonFile)) {
-                            modJson = JsonParser.parseReader(fileReader).getAsJsonObject();
-                        }
+                        if ((loomExtension.getPlatform().get() == ModPlatform.FABRIC) && !commonJsonFile.exists()) {
+                            JsonObject modJson;
+                            try (FileReader fileReader = new FileReader(jsonFile)) {
+                                modJson = JsonParser.parseReader(fileReader).getAsJsonObject();
+                            }
 
-                        JsonObject jCustom = modJson.getAsJsonObject("custom");
-                        if (jCustom == null)
-                            modJson.add("custom", jCustom = new JsonObject());
+                            JsonObject jCustom = modJson.getAsJsonObject("custom");
+                            if (jCustom == null)
+                                modJson.add("custom", jCustom = new JsonObject());
 
-                        JsonObject jInterfaceInjections = jCustom.getAsJsonObject("loom:injected_interfaces");
-                        if (jInterfaceInjections == null)
-                            jCustom.add("loom:injected_interfaces", jInterfaceInjections = new JsonObject());
+                            JsonObject jInterfaceInjections = jCustom.getAsJsonObject("loom:injected_interfaces");
+                            if (jInterfaceInjections == null)
+                                jCustom.add("loom:injected_interfaces", jInterfaceInjections = new JsonObject());
 
-                        for (Map.Entry<String, JsonElement> entry : jInterfaceInjections.entrySet()) {
-                            Set<String> ep = interfaceInjections.computeIfAbsent(entry.getKey(), s -> new LinkedHashSet<>());
-                            for (JsonElement element : entry.getValue().getAsJsonArray())
-                                ep.add(element.getAsString());
-                        }
+                            for (Map.Entry<String, JsonElement> entry : jInterfaceInjections.entrySet()) {
+                                Set<String> ep = interfaceInjections.computeIfAbsent(entry.getKey(), s -> new LinkedHashSet<>());
+                                for (JsonElement element : entry.getValue().getAsJsonArray())
+                                    ep.add(element.getAsString());
+                            }
 
-                        Files.lines(interfaceInjectionsFile.toPath(), StandardCharsets.UTF_8)
-                                .forEachOrdered(line -> {
-                                    if (!line.isEmpty()) {
-                                        int i = line.indexOf(' ');
-                                        interfaceInjections.computeIfAbsent(mapping.remap(line.substring(i + 1)), s -> new LinkedHashSet<>()).add(line.substring(0, i));
-                                    }
-                                });
+                            Files.lines(interfaceInjectionsFile.toPath(), StandardCharsets.UTF_8)
+                                    .forEachOrdered(line -> {
+                                        if (!line.isEmpty()) {
+                                            int i = line.indexOf(' ');
+                                            interfaceInjections.computeIfAbsent(mapping.remap(line.substring(i + 1)), s -> new LinkedHashSet<>()).add(line.substring(0, i));
+                                        }
+                                    });
 
-                        for (Map.Entry<String, Set<String>> entry : interfaceInjections.entrySet()) {
-                            JsonArray ep = new JsonArray();
+                            for (Map.Entry<String, Set<String>> entry : interfaceInjections.entrySet()) {
+                                JsonArray ep = new JsonArray();
 
-                            for (String s : entry.getValue())
-                                ep.add(s);
+                                for (String s : entry.getValue())
+                                    ep.add(s);
 
-                            jInterfaceInjections.add(entry.getKey(), ep);
-                        }
+                                jInterfaceInjections.add(entry.getKey(), ep);
+                            }
 
-                        Gson gson = new Gson();
-                        try (FileWriter fileWriter = new FileWriter(jsonFile); JsonWriter writer = gson.newJsonWriter(fileWriter)) {
-                            writer.setIndent("    ");
-                            gson.toJson(modJson, writer);
+                            Gson gson = new Gson();
+                            try (FileWriter fileWriter = new FileWriter(jsonFile); JsonWriter writer = gson.newJsonWriter(fileWriter)) {
+                                writer.setIndent("    ");
+                                gson.toJson(modJson, writer);
+                            }
+                        } else if (!jsonFile.exists() && commonJsonFile.exists()) {
+                            JsonObject commonJson;
+                            try (FileReader fileReader = new FileReader(commonJsonFile)) {
+                                commonJson = JsonParser.parseReader(fileReader).getAsJsonObject();
+                            }
+
+//                            JsonObject jCustom = commonJson.getAsJsonObject("custom");
+//                            if (jCustom == null)
+//                                commonJson.add("custom", jCustom = new JsonObject());
+
+                            JsonObject jInterfaceInjections = commonJson.getAsJsonObject("injected_interfaces");
+                            if (jInterfaceInjections == null)
+                                commonJson.add("injected_interfaces", jInterfaceInjections = new JsonObject());
+
+                            for (Map.Entry<String, JsonElement> entry : jInterfaceInjections.entrySet()) {
+                                Set<String> ep = interfaceInjections.computeIfAbsent(entry.getKey(), s -> new LinkedHashSet<>());
+                                for (JsonElement element : entry.getValue().getAsJsonArray())
+                                    ep.add(element.getAsString());
+                            }
+
+                            Files.lines(interfaceInjectionsFile.toPath(), StandardCharsets.UTF_8)
+                                    .forEachOrdered(line -> {
+                                        if (!line.isEmpty()) {
+                                            int i = line.indexOf(' ');
+                                            interfaceInjections.computeIfAbsent(mapping.remap(line.substring(i + 1)), s -> new LinkedHashSet<>()).add(line.substring(0, i));
+                                        }
+                                    });
+
+                            for (Map.Entry<String, Set<String>> entry : interfaceInjections.entrySet()) {
+                                JsonArray ep = new JsonArray();
+
+                                for (String s : entry.getValue())
+                                    ep.add(s);
+
+                                jInterfaceInjections.add(entry.getKey(), ep);
+                            }
+
+                            Gson gson = new Gson();
+                            try (FileWriter fileWriter = new FileWriter(jsonFile); JsonWriter writer = gson.newJsonWriter(fileWriter)) {
+                                writer.setIndent("    ");
+                                gson.toJson(commonJson, writer);
+                            }
                         }
                     } catch (IOException e) {
                         task.getProject().getLogger().error("Errored while inserting interface injections.", e);

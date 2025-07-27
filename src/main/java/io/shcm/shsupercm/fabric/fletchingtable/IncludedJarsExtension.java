@@ -56,13 +56,22 @@ public abstract class IncludedJarsExtension {
         for (File parentJarFile : configuration.resolve())
             try {
                 try (ZipFile parentJarZip = new ZipFile(parentJarFile)) {
-                    ZipEntry modJsonEntry = parentJarZip.getEntry("fabric.mod.json");
-                    if (modJsonEntry != null) {
-                        JsonObject modJson = JsonParser.parseReader(new InputStreamReader(parentJarZip.getInputStream(modJsonEntry), StandardCharsets.UTF_8)).getAsJsonObject();
+                    ZipEntry fabricModJsonEntry = parentJarZip.getEntry("fabric.mod.json");
+                    ZipEntry forgeLikeMetadataJsonEntry = parentJarZip.getEntry("META-INF/jarjar/metadata.json");
+                    if (fabricModJsonEntry != null) {
+                        JsonObject modJson = JsonParser.parseReader(new InputStreamReader(parentJarZip.getInputStream(fabricModJsonEntry), StandardCharsets.UTF_8)).getAsJsonObject();
                         JsonArray jars = modJson.getAsJsonArray("jars");
                         if (jars != null)
                             for (JsonElement jar : jars) {
                                 String jarPath = jar.getAsJsonObject().get("file").getAsString();
+                                Files.copy(parentJarZip.getInputStream(parentJarZip.getEntry(jarPath)), includedJarsCache.toPath().resolve(jarPath.substring(jarPath.lastIndexOf('/') + 1)), StandardCopyOption.REPLACE_EXISTING);
+                            }
+                    } else if (forgeLikeMetadataJsonEntry != null) {
+                        JsonObject metadataJson = JsonParser.parseReader(new InputStreamReader(parentJarZip.getInputStream(forgeLikeMetadataJsonEntry), StandardCharsets.UTF_8)).getAsJsonObject();
+                        JsonArray jars = metadataJson.getAsJsonArray("jars");
+                        if (jars != null)
+                            for (JsonElement jar : jars) {
+                                String jarPath = jar.getAsJsonObject().get("path").getAsString();
                                 Files.copy(parentJarZip.getInputStream(parentJarZip.getEntry(jarPath)), includedJarsCache.toPath().resolve(jarPath.substring(jarPath.lastIndexOf('/') + 1)), StandardCopyOption.REPLACE_EXISTING);
                             }
                     }
