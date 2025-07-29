@@ -5,7 +5,7 @@
 
 Additions and automations for [architectury-loom](https://github.com/architectury/architectury-loom).
 
-A fork of Fletching Table to supports multi-modloader project.
+A fork of [SHsuperCM/FletchingTable](https://github.com/SHsuperCM/FletchingTable) to supports multi-modloader project.
 
 ## Features
 ### Entrypoints
