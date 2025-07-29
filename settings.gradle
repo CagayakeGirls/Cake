@@ -9,6 +9,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'FletchingTable'
+rootProject.name = 'Cake'
 
 //include ':testmod'
