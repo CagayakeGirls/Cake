@@ -59,15 +59,15 @@ jar {
 }
 
 pluginBundle {
-    website = 'https://github.com/SHsuperCM/FletchingTable'
-    vcsUrl = 'https://github.com/SHsuperCM/FletchingTable'
+    website = 'https://github.com/CagayakeGirls/Cake'
+    vcsUrl = 'https://github.com/CagayakeGirls/Cake'
 
     description = 'Additions and automations for architectury-loom'
 
     plugins {
-        fletchingtable {
-            displayName = "Fletching Table"
-            tags = ['fabric', 'fabricmc', 'annotation processor']
+        cake {
+            displayName = "Cake"
+            tags = ['architectury-loom', 'neoforge', 'fabric', 'fabricmc', 'annotation processor']
         }
     }
 }

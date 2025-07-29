@@ -62,8 +62,6 @@ dependencies {
 }
 ```
 
-## CurseForgeMaven/ModrinthMaven Mod Dependency
-
 ### Settings
 Cake's default settings can be changed in an extension named `cake` as follows:
 ```groovy
@@ -85,7 +83,7 @@ cake {
 }
 ```
 
-## CurseForge/Modrinth Mod Dependency
+### CurseForge/Modrinth Mod Dependency
 ```groovy
 dependencies {
     // JEI 23.1.0.4 for NeoForge 1.21.7
@@ -94,7 +92,7 @@ dependencies {
 }
 ```
 
-## Mappings
+### Mappings
 We supports use yarn & parchment mappings
 ```groovy
 dependencies {
@@ -107,7 +105,7 @@ dependencies {
 }
 ```
 
-## ForgifiedFabricAPI Dependency
+### ForgifiedFabricAPI Dependency
 ```groovy
 dependencies {
     modImplementation forgifiedFabricApi.module("fabric-api-base", "0.129.0+2.0.26+1.21.8", false)
