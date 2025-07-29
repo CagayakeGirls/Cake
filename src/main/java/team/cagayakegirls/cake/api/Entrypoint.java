@@ -1,9 +1,10 @@
-package io.shcm.shsupercm.fabric.fletchingtable.api;
+package team.cagayakegirls.cake.api;
 
 import java.lang.annotation.*;
 
 /**
  * Automatically adds the annotated element to the requested entrypoint in fabric.mod.json
+ * Only working on Fabric
  */
 @Repeatable(Entrypoint.Repeated.class)
 @Retention(RetentionPolicy.SOURCE)

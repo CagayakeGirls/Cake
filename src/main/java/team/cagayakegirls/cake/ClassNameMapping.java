@@ -1,4 +1,4 @@
-package io.shcm.shsupercm.fabric.fletchingtable;
+package team.cagayakegirls.cake;
 
 import net.fabricmc.loom.api.LoomGradleExtensionAPI;
 import net.fabricmc.mappingio.MappedElementKind;

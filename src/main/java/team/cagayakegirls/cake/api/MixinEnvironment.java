@@ -1,18 +1,18 @@
-package io.shcm.shsupercm.fabric.fletchingtable.api;
+package team.cagayakegirls.cake.api;
 
 import java.lang.annotation.*;
 
 /**
- * Overrides the environment of the annotated mixin to be registered automatically by Fletching Table.<br>
+ * Overrides the environment of the annotated mixin to be registered automatically by Cake.<br>
  * The default value is applied to any class annotated with @Mixin regardless of this annotation.<br>
- * The default environment can be set in FletchingTable's configuration.
+ * The default environment can be set in Cake's configuration.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface MixinEnvironment {
 	/**
 	 * Overrides the default environment for the annotated mixin.<br>
-	 * The default environment can be set in FletchingTable's configuration.
+	 * The default environment can be set in Cake's configuration.
 	 * @return physical environment to inject this mixin on
 	 */
 	Env value() default Env.NONE;

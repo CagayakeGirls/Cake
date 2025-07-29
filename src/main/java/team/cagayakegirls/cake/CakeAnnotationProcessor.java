@@ -1,8 +1,8 @@
-package io.shcm.shsupercm.fabric.fletchingtable;
+package team.cagayakegirls.cake;
 
-import io.shcm.shsupercm.fabric.fletchingtable.api.Entrypoint;
-import io.shcm.shsupercm.fabric.fletchingtable.api.InterfaceInjection;
-import io.shcm.shsupercm.fabric.fletchingtable.api.MixinEnvironment;
+import team.cagayakegirls.cake.api.Entrypoint;
+import team.cagayakegirls.cake.api.InterfaceInjection;
+import team.cagayakegirls.cake.api.MixinEnvironment;
 import org.spongepowered.asm.mixin.Mixin;
 
 import javax.annotation.processing.*;
@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-public class FTAnnotationProcessor extends AbstractProcessor {
+public class CakeAnnotationProcessor extends AbstractProcessor {
     private Writer writerEntrypoints = null, writerMixins = null, writerInterfaceInjections = null;
     private String defaultMixinEnvironment, autoMixinClientPrefix, autoMixinServerPrefix;
     private boolean defaultMixinInterfaceInjections;
@@ -30,29 +30,29 @@ public class FTAnnotationProcessor extends AbstractProcessor {
         super.init(processingEnv);
         try {
             FileObject file;
-            if (processingEnv.getOptions().get("fletchingtable.entrypoints").equalsIgnoreCase("true")) {
-                file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "fletchingtable", "entrypoints.txt");
+            if (processingEnv.getOptions().get("cake.entrypoints").equalsIgnoreCase("true")) {
+                file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "cake", "entrypoints.txt");
                 file.delete();
                 writerEntrypoints = file.openWriter();
             }
-            if (processingEnv.getOptions().get("fletchingtable.mixins").equalsIgnoreCase("true")) {
-                file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "fletchingtable", "mixins.txt");
+            if (processingEnv.getOptions().get("cake.mixins").equalsIgnoreCase("true")) {
+                file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "cake", "mixins.txt");
                 file.delete();
                 writerMixins = file.openWriter();
-                file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "fletchingtable", "interfaceinjections.txt");
+                file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "cake", "interfaceinjections.txt");
                 file.delete();
                 writerInterfaceInjections = file.openWriter();
 
-                defaultMixinEnvironment = processingEnv.getOptions().get("fletchingtable.mixins.default");
+                defaultMixinEnvironment = processingEnv.getOptions().get("cake.mixins.default");
 
-                autoMixinClientPrefix = processingEnv.getOptions().get("fletchingtable.mixins.prefix.client");
+                autoMixinClientPrefix = processingEnv.getOptions().get("cake.mixins.prefix.client");
                 if (autoMixinClientPrefix.equals("null"))
                     autoMixinClientPrefix = null;
-                autoMixinServerPrefix = processingEnv.getOptions().get("fletchingtable.mixins.prefix.server");
+                autoMixinServerPrefix = processingEnv.getOptions().get("cake.mixins.prefix.server");
                 if (autoMixinServerPrefix.equals("null"))
                     autoMixinServerPrefix = null;
 
-                defaultMixinInterfaceInjections = processingEnv.getOptions().get("fletchingtable.mixins.interfaceinjection").equalsIgnoreCase("true");
+                defaultMixinInterfaceInjections = processingEnv.getOptions().get("cake.mixins.interfaceinjection").equalsIgnoreCase("true");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -69,13 +69,13 @@ public class FTAnnotationProcessor extends AbstractProcessor {
         Set<String> types = new HashSet<>();
 
         if (writerEntrypoints != null) {
-            types.add("io.shcm.shsupercm.fabric.fletchingtable.api.Entrypoint.Repeated");
-            types.add("io.shcm.shsupercm.fabric.fletchingtable.api.Entrypoint");
+            types.add("team.cagayakegirls.cake.api.Entrypoint.Repeated");
+            types.add("team.cagayakegirls.cake.api.Entrypoint");
         }
 
         if (writerMixins != null) {
             types.add("org.spongepowered.asm.mixin.Mixin");
-            types.add("io.shcm.shsupercm.fabric.fletchingtable.api.InterfaceInjection");
+            types.add("team.cagayakegirls.cake.api.InterfaceInjection");
         }
 
         return types;
@@ -85,12 +85,12 @@ public class FTAnnotationProcessor extends AbstractProcessor {
     public Set<String> getSupportedOptions() {
         HashSet<String> options = new HashSet<>();
 
-        options.add("fletchingtable.entrypoints");
-        options.add("fletchingtable.mixins");
-        options.add("fletchingtable.mixins.default");
-        options.add("fletchingtable.mixins.prefix.client");
-        options.add("fletchingtable.mixins.prefix.server");
-        options.add("fletchingtable.mixins.interfaceinjection");
+        options.add("cake.entrypoints");
+        options.add("cake.mixins");
+        options.add("cake.mixins.default");
+        options.add("cake.mixins.prefix.client");
+        options.add("cake.mixins.prefix.server");
+        options.add("cake.mixins.interfaceinjection");
 
         return options;
     }

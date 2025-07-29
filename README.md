@@ -1,14 +1,22 @@
-# Fletching Table
-Additions and automations for [architectury-loom](https://github.com/architectury/architectury-loom)
+# Cake
 
-## This project is still experimental, use at your own risk.
+> [!WARNING]
+> This project is still experimental, use at your own risk.
+
+Additions and automations for [architectury-loom](https://github.com/architectury/architectury-loom).
+
+A fork of Fletching Table to supports multi-modloader project.
 
 ## Features
 ### Entrypoints
+
+> [!CAUTION]
+> This feature is only support Fabric!
+
 Automatically registers entrypoints into the project's mod json.
 
 Simply annotate a static class, method or field with `@Entrypoint` and specify the desired entrypoint to register to in its value!
-Fletching Table will automatically process it and add it to existing entrypoints in `fabric.mod.json`.
+Cake will automatically process it and add it to existing entrypoints in `fabric.mod.json`.
 
 ### Mixins
 
@@ -28,11 +36,15 @@ You can set mixins to be registered automatically without MixinEnvironment by ch
 Registers interface injections automatically on mixins/interfaces annotated with `@InterfaceInjection`.
 
 By default either the interface or the mixin implementing it have to be annotated with `@InterfaceInjection`.
-You can change the default setting to always try to register interface injections in the fletchingTable settings block.
+You can change the default setting to always try to register interface injections in the cake settings block.
 The mixin annotation overrides the default setting and the interface's annotation overrides the mixin's setting.
 Automatic mixins must be turned on to use this feature.
 
 ### Included Jars
+
+> [!WARNING]
+> This feature is experimental on NeoForge and MinecraftForge!
+
 Exposes jars that were included in dependencies with Loom's `include` configuration.
 
 To use, first add an `includedJars` closure in your dependencies. 
@@ -50,27 +62,15 @@ dependencies {
 }
 ```
 
-### Fungible
-Adds a shortcut to add [Fungible by magistermaks](https://github.com/magistermaks/mod-fungible) to the development environment.
-
-To use, add `fletchingTable.fungible "<RELEASE TAG>"` in the dependencies block with the release tag of the version of fungible you want to add.<br>
-Example for [fungible v1.2 for minecraft 1.19.2](https://github.com/magistermaks/mod-fungible/releases/tag/1.2%2Bmc1.19.2):
-```groovy
-dependencies {
-    ..
-    fletchingTable.fungible "1.2+mc1.19.2"
-}
-```
-
-[List of available fungible version tags](https://github.com/magistermaks/mod-fungible/tags)
+## CurseForgeMaven/ModrinthMaven Mod Dependency
 
 ### Settings
-Fletching Table's default settings can be changed in an extension named `fletchingTable` as follows:
+Cake's default settings can be changed in an extension named `cake` as follows:
 ```groovy
-fletchingTable {
+cake {
     // Enables the entire annotation processor and adds the annotation api to the project's classpath
     enableAnnotationProcessor = true //default
-    // Enables injecting processed entrypoint annotations to the mod json
+    // Enables injecting processed entrypoint annotations to the fabric mod json
     enableEntrypoints = true //default
     // Enables injecting mixins to the mixin jsons
     enableMixins = true //default
@@ -85,29 +85,46 @@ fletchingTable {
 }
 ```
 
+## CurseForge/Modrinth Mod Dependency
+```groovy
+dependencies {
+    // JEI 23.1.0.4 for NeoForge 1.21.7
+    modImplementation modDeps.curseforge("jei", "238222", "6756169") // curse.maven:jei-238222:6756169 
+    modImplementation modDeps.modrinth("jei", "23.1.0.4") // maven.modrinth:jei:23.1.0.4
+}
+```
+
+## Mappings
+We supports use yarn & parchment mappings
+```groovy
+dependencies {
+    // Yarn mappings v1 only support fabric.
+    mappings cakeMappings.yarn("1.21.1+build.4", false) // net.fabricmc:yarn:1.21.1+build.4:v1
+    // Yarn mappings patch only support (Neo)Forge, because (Neo)Forge patches broken with yarn mappings.
+    mappings cakeMappings.yarnWithPatch("1.21.1+build.4", "1.21+build.1") // "net.fabricmc:yarn:1.21.1+build.4:v2" layered "dev.architectury:yarn-mappings-patch-neoforge:1.21+build.1"
+    // Parchment Mappings only support with mojmap (official mappings)
+    mappings cakeMappings.parchment("1.21.1", "2024.11.17") // mojmap layered "org.parchmentmc.data:parchment-1.21.1:2024.11.17@zip"
+}
+```
+
+## ForgifiedFabricAPI Dependency
+```groovy
+dependencies {
+    modImplementation forgifiedFabricApi.module("fabric-api-base", "0.129.0+2.0.26+1.21.8", false)
+}
+```
 
 ## Setup
 Add the plugin by applying it <ins>**after loom**</ins>.
 ```patch
 plugins {
     id 'dev.architectury.loom' ...
-+   id "io.shcm.shsupercm.fabric.fletchingtable" version "1.6"
++   id "team.cagayakegirls.cake" version "1.6"
 }
 ```
 
 ## Changelog
-Look at the [commits](https://github.com/SHsuperCM/FletchingTable/commits) for a changelog.
+Look at the [commits](https://github.com/CagayakeGirls/Cake/commits) for a changelog.
 
-## Planned
- - ~~Kotlin support~~ (only if I somehow find the time, kotlin is cursed af)
-
-## About Fletching Table
-I originally suggested automatic entrypoints to loom but it was denied as it was out of scope. I was told it would make a good library and while I still believe Fabric should have automatic entrypoints by default, I agree that it needs to be a thing regardless.
-
-Someone then told me on the Fabric discord that [Fudge](https://github.com/natanfudge) already made [a library for entrypoint annotations](https://github.com/natanfudge/AutoFabric) but it turned out to be buggy and hard to fix(why kotlin..).
-Still, Fudge did a good amount of work that in the end helped me set up Fletching Table so thanks for that.
-
-I also had some more things I wanted out of loom so I figured I might as well make my own plugin.
-
-Why "Fletching Table"?
-I- Idk.. just wanted something Loom-adjacent and didnt want to call it Smithing Table :p
+## Credits
+- [SHsuperCM/FletchingTable](https://github.com/SHsuperCM/FletchingTable)

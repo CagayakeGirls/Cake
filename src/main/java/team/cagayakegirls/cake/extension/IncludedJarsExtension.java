@@ -1,4 +1,4 @@
-package io.shcm.shsupercm.fabric.fletchingtable;
+package team.cagayakegirls.cake.extension;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -8,6 +8,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import team.cagayakegirls.cake.CakeExtension;
 
 import java.io.File;
 import java.io.InputStreamReader;
@@ -19,15 +20,15 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class IncludedJarsExtension {
-    private final FletchingTableExtension fletchingTableExtension;
+    private final CakeExtension cakeExtension;
     private final File includedJarsCache;
     private final DependencyHandler dependencies;
     private final ConfigurationContainer configurations;
 
-    public IncludedJarsExtension(Project project, FletchingTableExtension fletchingTableExtension) {
-        this.fletchingTableExtension = fletchingTableExtension;
+    public IncludedJarsExtension(Project project, CakeExtension cakeExtension) {
+        this.cakeExtension = cakeExtension;
 
-        this.includedJarsCache = new File(project.getProjectDir(), ".gradle/fletchingtable/includedJarsCache");
+        this.includedJarsCache = new File(project.getProjectDir(), ".gradle/cake/includedJarsCache");
 
         if (includedJarsCache.exists()) {
             for (File file : Objects.requireNonNull(includedJarsCache.listFiles()))

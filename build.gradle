@@ -16,14 +16,14 @@ repositories {
 }
 
 version = '1.6'
-group = 'io.shcm.shsupercm.fabric'
+group = 'team.cagayakegirls.cake'
 
 gradlePlugin {
     // Define the plugin
     plugins {
-        fletchingtable {
-            id = 'io.shcm.shsupercm.fabric.fletchingtable'
-            implementationClass = 'io.shcm.shsupercm.fabric.fletchingtable.FTGradlePlugin'
+        cake {
+            id = 'team.cagayakegirls.cake'
+            implementationClass = 'team.cagayakegirls.cake.CakeGradlePlugin'
         }
     }
 }
@@ -47,7 +47,7 @@ task apiJar(type: Jar) {
 
     from sourceSets.main.output
     from sourceSets.main.java.getSrcDirs()
-    include "io/shcm/shsupercm/fabric/fletchingtable/api/**"
+    include "team/cagayakegirls/cake/api/**"
 }
 
 jar.dependsOn(apiJar)
@@ -62,7 +62,7 @@ pluginBundle {
     website = 'https://github.com/SHsuperCM/FletchingTable'
     vcsUrl = 'https://github.com/SHsuperCM/FletchingTable'
 
-    description = 'Additions and automations for fabric-loom'
+    description = 'Additions and automations for architectury-loom'
 
     plugins {
         fletchingtable {
