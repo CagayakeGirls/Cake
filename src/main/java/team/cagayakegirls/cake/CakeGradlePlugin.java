@@ -8,6 +8,7 @@ import com.electronwill.nightconfig.core.io.ConfigWriter;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
+import org.gradle.api.plugins.PluginAware;
 import team.cagayakegirls.cake.api.MixinEnvironment;
 import net.fabricmc.loom.LoomGradleExtension;
 import net.fabricmc.loom.util.ModPlatform;
@@ -41,9 +42,9 @@ public class CakeGradlePlugin implements Plugin<Project> {
 
         project.getDependencies().getExtensions().create("includedJars", IncludedJarsExtension.class, project, cakeExtension);
 
-        project.getExtensions().create("forgifiedFabricApi", ForgifiedFabricApiExtension.class, project);
-        project.getExtensions().create("modDeps", ModDependencyExtension.class, project);
-        project.getExtensions().create("cakeMappings", MappingsExtension.class, project);
+        project.getExtensions().create("forgifiedFabricApi", ForgifiedFabricApiExtension.class);
+        project.getExtensions().create("modDeps", ModDependencyExtension.class);
+        project.getExtensions().create("cakeMappings", MappingsExtension.class);
     }
 
     private void afterEvaluate(Project project) {

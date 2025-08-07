@@ -1,6 +1,6 @@
 plugins {
 	id "dev.architectury.loom" version '1.10-SNAPSHOT'
-	id "team.cagayakegirls.cake" version "1.6"
+	id "team.cagayakegirls.cake" version "1.6-SNAPSHOT"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -25,7 +25,7 @@ loom {
 	accessWidenerPath = file("src/main/resources/test-mod.accesswidener")
 }
 
-fletchingTable {
+cake {
 	defaultMixinEnvironment = "auto"
 	enableAutoInterfaceInjections = true
 }
