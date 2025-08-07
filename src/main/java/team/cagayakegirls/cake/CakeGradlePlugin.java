@@ -51,8 +51,6 @@ public class CakeGradlePlugin implements Plugin<Project> {
         FileCollection thisJar = project.files(getClass().getProtectionDomain().getCodeSource().getLocation());
         LoomGradleExtension loomExtension = LoomGradleExtension.get(project);
 
-        loomExtension.getPlatform();
-
         if (cakeExtension.getEnableAnnotationProcessor().get()) {
             try (InputStream is = getClass().getClassLoader().getResourceAsStream("META-INF/jars/api.jar")) {
                 File file = new File(project.getProjectDir(), ".gradle/cake");
