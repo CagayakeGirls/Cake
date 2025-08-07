@@ -6,11 +6,8 @@ plugins {
 
 repositories {
     maven { url = "https://repo.spongepowered.org/maven/" }
-    maven {
-        name = 'Fabric'
-        url = 'https://maven.fabricmc.net/'
-    }
-    maven { url "https://maven.architectury.dev/" }
+    maven { url = "https://maven.fabricmc.net/"}
+    maven { url = "https://maven.architectury.dev/" }
     mavenCentral()
     gradlePluginPortal()
 }
@@ -42,7 +39,7 @@ dependencies {
 }
 
 task apiJar(type: Jar) {
-    archiveName "api.jar"
+    archiveBaseName.set("api.jar")
 
     from sourceSets.main.output
     from sourceSets.main.java.getSrcDirs()
