@@ -30,16 +30,15 @@ gradlePlugin {
 javadoc.options.addStringOption('Xdoclint:none', '-quiet')
 
 dependencies {
-    compileOnly group: 'commons-io', name: 'commons-io', version: '2.15.1'
-    compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
-    compileOnly group: 'net.fabricmc', name: 'sponge-mixin', version: '0.15.3+mixin.0.8.7'
-    compileOnly group: 'dev.architectury', name: 'architectury-loom', version: '1.10-SNAPSHOT'
-    compileOnly group: 'net.fabricmc', name: 'mapping-io', version: '0.7.1'
+    compileOnly "commons-io:commons-io:2.15.1"
+    compileOnly "com.google.code.gson:gson:2.10.1"
+    compileOnly "net.fabricmc:sponge-mixin:0.16.3+mixin.0.8.7"
+    compileOnly "dev.architectury:architectury-loom:1.10-SNAPSHOT"
+    compileOnly "net.fabricmc:mapping-io:0.7.1"
 
     // Forge mods.toml parsing
-    compileOnly group: 'com.electronwill.night-config', name: 'toml', version: '3.6.6'
-
-    compileOnly("org.jetbrains:annotations:25.0.0")
+    compileOnly "com.electronwill.night-config:toml:3.6.6"
+    compileOnly "org.jetbrains:annotations:25.0.0"
 }
 
 task apiJar(type: Jar) {
@@ -75,8 +74,13 @@ pluginBundle {
 publishing {
     repositories {
         maven {
-            name = 'localPluginRepository'
-            url = './local-plugin-repository'
+            name = "KTTMaven"
+            url = "https://maven.kessokuteatime.work/releases"
+
+            credentials {
+                username = System.getenv("KTT_MAVEN_USERNAME")
+                password = System.getenv("KTT_MAVEN_TOKEN")
+            }
         }
     }
 }
