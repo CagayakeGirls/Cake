@@ -1,18 +1,7 @@
-buildscript {
-	repositories {
-		mavenLocal()
-		gradlePluginPortal()
-	}
-	dependencies {
-		classpath 'team.cagayakegirls.cake:Cake:1.6-SNAPSHOT'
-	}
-}
-
 plugins {
-	id 'fabric-loom' version '1.1-SNAPSHOT'
+	id "dev.architectury.loom" version '1.10-SNAPSHOT'
+	id "team.cagayakegirls.cake" version "1.6-SNAPSHOT"
 }
-
-apply plugin: 'team.cagayakegirls.cake'
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
@@ -30,8 +19,6 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-
 }
 
 loom {
