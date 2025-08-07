@@ -71,6 +71,14 @@ public class CakeGradlePlugin implements Plugin<PluginAware> {
             repo.setName("NeoForge");
             repo.setUrl("https://maven.neoforged.net/releases/");
         });
+        repositories.maven(repo -> {
+            repo.setName("KTTMaven");
+            repo.setUrl("https://maven.kessokuteatime.work/releases/");
+        });
+        repositories.maven(repo -> {
+            repo.setName("KTTMaven");
+            repo.setUrl("https://maven.kessokuteatime.work/snapshots/");
+        });
     }
 
     private void afterEvaluate(Project project) {
