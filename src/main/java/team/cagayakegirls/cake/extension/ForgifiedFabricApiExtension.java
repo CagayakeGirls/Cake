@@ -25,17 +25,14 @@ public abstract class ForgifiedFabricApiExtension {
     protected abstract Project getProject();
 
     private final HashMap<String, Map<String, String>> moduleVersionCache = new HashMap<>();
-    private boolean isSinytraVersion;
 
     public Dependency module(String moduleName, String fabricApiVersion, boolean isSinytraVersion) {
-        this.isSinytraVersion = isSinytraVersion;
-        return getProject().getDependencies()
-                .create(getDependencyNotation(moduleName, fabricApiVersion));
+        return getProject().getDependencies().create(getDependencyNotation(moduleName, fabricApiVersion, isSinytraVersion));
     }
 
-    public String moduleVersion(String moduleName, String fabricApiVersion) {
+    public String moduleVersion(String moduleName, String fabricApiVersion, boolean isSinytraVersion) {
         String moduleVersion = moduleVersionCache
-                .computeIfAbsent(fabricApiVersion, this::getApiModuleVersions)
+                .computeIfAbsent(fabricApiVersion, s -> getApiModuleVersions(s, isSinytraVersion))
                 .get(moduleName);
 
         if (moduleVersion == null) {
@@ -45,13 +42,13 @@ public abstract class ForgifiedFabricApiExtension {
         return moduleVersion;
     }
 
-    private String getDependencyNotation(String moduleName, String fabricApiVersion) {
-        return String.format("org.sinytra.forgified-fabric-api:%s:%s", moduleName, moduleVersion(moduleName, fabricApiVersion));
+    private String getDependencyNotation(String moduleName, String fabricApiVersion, boolean isSinytraVersion) {
+        return String.format("org.sinytra.forgified-fabric-api:%s:%s", moduleName, moduleVersion(moduleName, fabricApiVersion, isSinytraVersion));
     }
 
-    private Map<String, String> getApiModuleVersions(String fabricApiVersion) {
+    private Map<String, String> getApiModuleVersions(String fabricApiVersion, boolean isSinytraVersion) {
         try {
-            return populateModuleVersionMap(getApiMavenPom(fabricApiVersion));
+            return populateModuleVersionMap(getApiMavenPom(fabricApiVersion, isSinytraVersion));
         } catch (PomNotFoundException e) {
             throw new RuntimeException("Could not find forgified-fabric-api version: " + fabricApiVersion);
         }
@@ -85,16 +82,16 @@ public abstract class ForgifiedFabricApiExtension {
         }
     }
 
-    private File getApiMavenPom(String fabricApiVersion) throws PomNotFoundException {
-        return getPom("forgified-fabric-api", fabricApiVersion);
+    private File getApiMavenPom(String fabricApiVersion, boolean isSinytraVersion) throws PomNotFoundException {
+        return getPom("forgified-fabric-api", fabricApiVersion, isSinytraVersion);
     }
 
-    private File getPom(String name, String version) throws PomNotFoundException {
+    private File getPom(String name, String version, boolean isSinytraVersion) throws PomNotFoundException {
         final LoomGradleExtension extension = LoomGradleExtension.get(getProject());
         final var mavenPom = new File(extension.getFiles().getUserCache(), "forgified-fabric-api/%s-%s.pom".formatted(name, version));
 
         try {
-            if (this.isSinytraVersion == true) {
+            if (isSinytraVersion == true) {
                 extension.download(String.format("https://maven.su5ed.dev/releases/org/sinytra/forgified-fabric-api/%2$s/%1$s/%2$s-%1$s.pom", version, name))
                         .defaultCache()
                         .downloadPath(mavenPom.toPath());

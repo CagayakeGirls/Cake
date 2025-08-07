@@ -8,6 +8,9 @@ import com.electronwill.nightconfig.core.io.ConfigWriter;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
+import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.initialization.Settings;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.plugins.PluginAware;
 import team.cagayakegirls.cake.api.MixinEnvironment;
 import net.fabricmc.loom.LoomGradleExtension;
@@ -31,20 +34,43 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-public class CakeGradlePlugin implements Plugin<Project> {
+public class CakeGradlePlugin implements Plugin<PluginAware> {
     private CakeExtension cakeExtension;
 
     @Override
-    public void apply(Project project) {
-        cakeExtension = project.getExtensions().create("cake", CakeExtension.class, project);
+    public void apply(PluginAware target) {
+        switch (target) {
+            case Settings settings -> {
+                additionalRepositories(settings.getDependencyResolutionManagement().getRepositories());
 
-        project.afterEvaluate(this::afterEvaluate);
+                settings.getGradle().getPluginManager().apply(CakeGradlePlugin.class);
+            }
+            case Project project -> {
+                cakeExtension = project.getExtensions().create("cake", CakeExtension.class, project);
 
-        project.getDependencies().getExtensions().create("includedJars", IncludedJarsExtension.class, project, cakeExtension);
+                project.afterEvaluate(this::afterEvaluate);
 
-        project.getExtensions().create("forgifiedFabricApi", ForgifiedFabricApiExtension.class);
-        project.getExtensions().create("modDeps", ModDependencyExtension.class);
-        project.getExtensions().create("cakeMappings", MappingsExtension.class);
+                project.getDependencies().getExtensions().create("includedJars", IncludedJarsExtension.class, project, cakeExtension);
+
+                project.getExtensions().create("forgifiedFabricApi", ForgifiedFabricApiExtension.class);
+                project.getExtensions().create("modDeps", ModDependencyExtension.class);
+                project.getExtensions().create("cakeMappings", MappingsExtension.class);
+
+                additionalRepositories(project.getRepositories());
+            }
+            case Gradle gradle -> {
+                return;
+            }
+            default ->
+                    throw new IllegalArgumentException("Expected target to be a Project or Settings, but was a " + target.getClass());
+        }
+    }
+
+    public void additionalRepositories(RepositoryHandler repositories) {
+        repositories.maven(repo -> {
+            repo.setName("NeoForge");
+            repo.setUrl("https://maven.neoforged.net/releases/");
+        });
     }
 
     private void afterEvaluate(Project project) {
