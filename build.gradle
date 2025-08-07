@@ -97,8 +97,8 @@ publishing {
 
             // Manually crate the plugin marker for snapshot versions
             snapshotPlugin(MavenPublication) {
-                groupId = 'band.kessoku.koom'
-                artifactId = 'band.kessoku.koom.gradle.plugin'
+                groupId = 'team.cagayakegirls.cake'
+                artifactId = 'team.cagayakegirls.cake.gradle.plugin'
                 version = baseVersion + '-SNAPSHOT'
 
                 pom.withXml({
