@@ -26,13 +26,13 @@ public abstract class ForgifiedFabricApiExtension {
 
     private final HashMap<String, Map<String, String>> moduleVersionCache = new HashMap<>();
 
-    public Dependency module(String moduleName, String fabricApiVersion, boolean isSinytraVersion) {
-        return getProject().getDependencies().create(getDependencyNotation(moduleName, fabricApiVersion, isSinytraVersion));
+    public Dependency module(String moduleName, String fabricApiVersion) {
+        return getProject().getDependencies().create(getDependencyNotation(moduleName, fabricApiVersion));
     }
 
-    public String moduleVersion(String moduleName, String fabricApiVersion, boolean isSinytraVersion) {
+    public String moduleVersion(String moduleName, String fabricApiVersion) {
         String moduleVersion = moduleVersionCache
-                .computeIfAbsent(fabricApiVersion, s -> getApiModuleVersions(s, isSinytraVersion))
+                .computeIfAbsent(fabricApiVersion, s -> getApiModuleVersions(s))
                 .get(moduleName);
 
         if (moduleVersion == null) {
@@ -42,13 +42,13 @@ public abstract class ForgifiedFabricApiExtension {
         return moduleVersion;
     }
 
-    private String getDependencyNotation(String moduleName, String fabricApiVersion, boolean isSinytraVersion) {
-        return String.format("org.sinytra.forgified-fabric-api:%s:%s", moduleName, moduleVersion(moduleName, fabricApiVersion, isSinytraVersion));
+    private String getDependencyNotation(String moduleName, String fabricApiVersion) {
+        return String.format("org.sinytra.forgified-fabric-api:%s:%s", moduleName, moduleVersion(moduleName, fabricApiVersion));
     }
 
-    private Map<String, String> getApiModuleVersions(String fabricApiVersion, boolean isSinytraVersion) {
+    private Map<String, String> getApiModuleVersions(String fabricApiVersion) {
         try {
-            return populateModuleVersionMap(getApiMavenPom(fabricApiVersion, isSinytraVersion));
+            return populateModuleVersionMap(getApiMavenPom(fabricApiVersion));
         } catch (PomNotFoundException e) {
             throw new RuntimeException("Could not find forgified-fabric-api version: " + fabricApiVersion);
         }
@@ -82,24 +82,23 @@ public abstract class ForgifiedFabricApiExtension {
         }
     }
 
-    private File getApiMavenPom(String fabricApiVersion, boolean isSinytraVersion) throws PomNotFoundException {
-        return getPom("forgified-fabric-api", fabricApiVersion, isSinytraVersion);
+    private File getApiMavenPom(String fabricApiVersion) throws PomNotFoundException {
+        return getPom("forgified-fabric-api", fabricApiVersion);
     }
 
-    private File getPom(String name, String version, boolean isSinytraVersion) throws PomNotFoundException {
+    private File getPom(String name, String version) throws PomNotFoundException {
         final LoomGradleExtension extension = LoomGradleExtension.get(getProject());
         final var mavenPom = new File(extension.getFiles().getUserCache(), "forgified-fabric-api/%s-%s.pom".formatted(name, version));
 
         try {
-            if (isSinytraVersion == true) {
-                extension.download(String.format("https://maven.su5ed.dev/releases/org/sinytra/forgified-fabric-api/%2$s/%1$s/%2$s-%1$s.pom", version, name))
-                        .defaultCache()
-                        .downloadPath(mavenPom.toPath());
-            } else {
-                extension.download(String.format("https://maven.kessokuteatime.work/snapshots/org/sinytra/forgified-fabric-api/%2$s/%1$s/%2$s-%1$s.pom", version, name))
-                        .defaultCache()
-                        .downloadPath(mavenPom.toPath());
-            }
+            extension.download(String.format("https://maven.su5ed.dev/releases/org/sinytra/forgified-fabric-api/%2$s/%1$s/%2$s-%1$s.pom", version, name))
+                    .defaultCache()
+                    .downloadPath(mavenPom.toPath());
+
+            extension.download(String.format("https://maven.kessokuteatime.work/snapshots/org/sinytra/forgified-fabric-api/%2$s/%1$s/%2$s-%1$s.pom", version, name))
+                    .defaultCache()
+                    .downloadPath(mavenPom.toPath());
+
         } catch (DownloadException e) {
             if (e.getStatusCode() == 404) {
                 throw new PomNotFoundException(e);
